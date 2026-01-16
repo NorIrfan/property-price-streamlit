@@ -1,0 +1,11 @@
+# Big dataset - never upload
+data/Norm_Fused_Dataset.csv
+
+# Python junk
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Optional: helper script
+make_sample.py

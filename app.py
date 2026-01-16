@@ -61,7 +61,9 @@ def train_models(df):
         "KNN": KNeighborsRegressor(n_neighbors=5),
         "SVM (LinearSVR)": LinearSVR(max_iter=10000, random_state=42),
         "Neural Network": MLPRegressor(
-            hidden_layer_sizes=(64, 32), max_iter=300, random_state=42
+            hidden_layer_sizes=(64, 32),
+            max_iter=300,
+            random_state=42,
         ),
     }
 
@@ -93,9 +95,15 @@ st.title("🏠 Property Price Forecasting (Train-in-Cloud)")
 
 df = load_data()
 
-# Dropdown options (built from dataset)
-property_type_options = sorted(df["Property_Type"].dropna().unique().tolist()) if "Property_Type" in df.columns else []
-tenure_options = sorted(df["Tenure"].dropna().unique().tolist()) if "Tenure" in df.columns else []
+# Build dropdown options from dataset (available values)
+property_type_options = []
+tenure_options = []
+
+if "Property_Type" in df.columns:
+    property_type_options = sorted(df["Property_Type"].dropna().astype(str).unique().tolist())
+
+if "Tenure" in df.columns:
+    tenure_options = sorted(df["Tenure"].dropna().astype(str).unique().tolist())
 
 menu = st.sidebar.radio("Navigation", ["Overview", "EDA", "Train & Compare", "Predict"])
 
@@ -135,18 +143,22 @@ elif menu == "Train & Compare":
     )
 
 else:
+    # ---------------- Predict (kept the same flow) ----------------
     st.subheader("Predict Transaction Price")
     with st.spinner("Loading trained models..."):
         trained, results, feature_cols = train_models(df)
 
+    # ✅ Keep model selection
     model_name = st.selectbox("Choose model", list(trained.keys()))
     model = trained[model_name]
 
     st.caption(
-        "Enter values. Property Type and Tenure use dropdowns (from dataset). Other categorical fields are text for now."
+        "Fill in the inputs below. **Property Type** and **Tenure** are dropdowns based on available dataset values."
     )
 
     user_input = {}
+
+    # ✅ Keep all inputs; only change Property_Type & Tenure to dropdown
     for col in feature_cols:
         if col == "Property_Type":
             if property_type_options:
@@ -169,6 +181,7 @@ else:
         else:
             user_input[col] = st.number_input(col, value=0.0)
 
+    # ✅ Keep Predict button
     if st.button("Predict"):
         input_df = pd.DataFrame([user_input], columns=feature_cols)
         pred = model.predict(input_df)[0]

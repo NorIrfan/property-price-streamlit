@@ -48,7 +48,6 @@ def train_models(df):
         ]
     )
 
-    # Keep Random Forest SMALL so training is fast in cloud
     model_defs = {
         "Linear Regression": LinearRegression(),
         "Random Forest (Small)": RandomForestRegressor(
@@ -95,7 +94,7 @@ st.title("🏠 Property Price Forecasting (Train-in-Cloud)")
 
 df = load_data()
 
-# Build dropdown options from dataset (available values)
+# Build dropdown options from dataset
 property_type_options = []
 tenure_options = []
 
@@ -108,12 +107,13 @@ if "Tenure" in df.columns:
 menu = st.sidebar.radio("Navigation", ["Overview", "EDA", "Train & Compare", "Predict"])
 
 
+# ---------------- Overview ----------------
 if menu == "Overview":
     st.write(
         "Regression task: predict **Transaction Price** based on income, population, and property attributes."
     )
-    st.info(f"Loaded sample: {df.shape[0]:,} rows × {df.shape[1]} columns")
 
+# ---------------- EDA ----------------
 elif menu == "EDA":
     st.subheader("EDA (Sample)")
     st.dataframe(df.head(30), use_container_width=True)
@@ -129,6 +129,7 @@ elif menu == "EDA":
             use_container_width=True,
         )
 
+# ---------------- Train & Compare ----------------
 elif menu == "Train & Compare":
     st.subheader("Train & Compare Models (cached)")
     with st.spinner("Training models (first run only)..."):
@@ -142,13 +143,12 @@ elif menu == "Train & Compare":
         use_container_width=True,
     )
 
+# ---------------- Predict ----------------
 else:
-    # ---------------- Predict (kept the same flow) ----------------
     st.subheader("Predict Transaction Price")
     with st.spinner("Loading trained models..."):
         trained, results, feature_cols = train_models(df)
 
-    # ✅ Keep model selection
     model_name = st.selectbox("Choose model", list(trained.keys()))
     model = trained[model_name]
 
@@ -158,19 +158,12 @@ else:
 
     user_input = {}
 
-    # ✅ Keep all inputs; only change Property_Type & Tenure to dropdown
     for col in feature_cols:
         if col == "Property_Type":
-            if property_type_options:
-                user_input[col] = st.selectbox("Property Type", property_type_options)
-            else:
-                user_input[col] = st.text_input("Property_Type", value="")
+            user_input[col] = st.selectbox("Property Type", property_type_options)
 
         elif col == "Tenure":
-            if tenure_options:
-                user_input[col] = st.selectbox("Tenure", tenure_options)
-            else:
-                user_input[col] = st.text_input("Tenure", value="")
+            user_input[col] = st.selectbox("Tenure", tenure_options)
 
         elif col in ["District", "state"]:
             user_input[col] = st.text_input(col, value="")
@@ -181,7 +174,6 @@ else:
         else:
             user_input[col] = st.number_input(col, value=0.0)
 
-    # ✅ Keep Predict button
     if st.button("Predict"):
         input_df = pd.DataFrame([user_input], columns=feature_cols)
         pred = model.predict(input_df)[0]
